@@ -1,0 +1,82 @@
+/* Glass effect utility classes */
+.primary-glass {
+  background: rgba(255,255,255,0.10);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(255,255,255,0.20);
+  box-shadow: 0 8px 32px 0 rgba(31,38,135,0.37);
+}
+.secondary-glass {
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.30);
+  box-shadow: 0 4px 16px 0 rgba(31,38,135,0.27);
+}
+.floating-glass {
+  background: rgba(255,255,255,0.20);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.40);
+  box-shadow: 0 12px 48px 0 rgba(31,38,135,0.47);
+}
+.hover-glass:hover {
+  background: rgba(255,255,255,0.25);
+  border: 1px solid rgba(255,255,255,0.50);
+  box-shadow: 0 16px 64px 0 rgba(31,38,135,0.57);
+  transition: all 0.3s;
+}
+.active-glass {
+  background: rgba(255,255,255,0.30);
+  border: 1px solid rgba(255,255,255,0.50);
+  box-shadow: inset 0 2px 8px 0 rgba(31,38,135,0.17);
+}
+
+/* Example for main container gradient */
+.weather-gradient {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+  transition: all 1s;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Add more classes for padding, margin, text, etc. as needed */
+.text-center { text-align: center; }
+.font-bold { font-weight: bold; }
+.rounded-xl { border-radius: 1rem; }
+.rounded-2xl { border-radius: 2rem; }
+.p-4 { padding: 1rem; }
+.p-6 { padding: 1.5rem; }
+.p-8 { padding: 2rem; }
+.mb-4 { margin-bottom: 1rem; }
+.mb-8 { margin-bottom: 2rem; }
+.mt-8 { margin-top: 2rem; }
+.mt-12 { margin-top: 3rem; }
+.inline-block { display: inline-block; }
+.flex { display: flex; }
+.items-center { align-items: center; }
+.justify-center { justify-content: center; }
+.gap-2 { gap: 0.5rem; }
+.gap-4 { gap: 1rem; }
+.gap-6 { gap: 1.5rem; }
+.w-full { width: 100%; }
+.w-24 { width: 6rem; }
+.w-48 { width: 12rem; }
+.h-24 { height: 6rem; }
+.h-48 { height: 12rem; }
+.text-white { color: #fff; }
+.text-lg { font-size: 1.125rem; }
+.text-xl { font-size: 1.25rem; }
+.text-2xl { font-size: 1.5rem; }
+.text-3xl { font-size: 1.875rem; }
+.text-4xl { font-size: 2.25rem; }
+.text-sm { font-size: 0.875rem; }
+.text-xs { font-size: 0.75rem; }
+.bg-white { background: #fff; }
+.bg-white-10 { background: rgba(255,255,255,0.10); }
+.bg-white-20 { background: rgba(255,255,255,0.20); }
+.bg-white-30 { background: rgba(255,255,255,0.30); }
+.shadow-lg { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05); }
+.shadow-xl { box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.05); }
+.shadow-2xl { box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
+.shadow-inner { box-shadow: inset 0 2px 4px 0 rgba(0,0,0,0.06); }
+
+/* ...add more as needed for your layout... */

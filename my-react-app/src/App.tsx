@@ -1,3 +1,4 @@
+import './App.css';
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Cloud, 
@@ -462,12 +463,7 @@ const WeatherApp: React.FC = () => {
         <div className="absolute bottom-1/3 right-1/4 w-20 h-20 bg-white/4 rounded-full blur-lg animate-pulse delay-1500"></div>
       </div>
 
-      {/* Demo Notice */}
-      <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
-        <div className={`${glassStyles.primaryGlass} text-white px-6 py-3 rounded-lg ${glassStyles.hoverGlass}`}>
-          <p className="text-sm font-medium">🌟 Demo Weather App - Using mock data for demonstration</p>
-        </div>
-      </div>
+     
 
       {/* Notification */}
       {showNotification && (
@@ -843,3 +839,5 @@ const WeatherApp: React.FC = () => {
     </div>
   );
 };
+
+export default WeatherApp;
