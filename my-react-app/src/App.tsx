@@ -204,19 +204,19 @@ const WeatherApp: React.FC = () => {
     }, 1000);
   }, [searchQuery, getMockWeatherData]);
 
-  // Initialize with current location
-  useEffect(() => {
-    if (!currentWeather) {
-      getCurrentLocation();
-    }
-  }, [getCurrentLocation, currentWeather]);
-
   // Show notification
   const showNotificationMessage = useCallback((message: string) => {
     setNotificationMessage(message);
     setShowNotification(true);
     setTimeout(() => setShowNotification(false), 3000);
   }, []);
+
+  // Initialize with current location
+  useEffect(() => {
+    if (!currentWeather) {
+      getCurrentLocation();
+    }
+  }, [getCurrentLocation, currentWeather]);
 
   // Convert temperature
   const convertTemp = useCallback((temp: number) => {
@@ -295,6 +295,8 @@ const WeatherApp: React.FC = () => {
     showNotificationMessage(`Units changed to ${newUnits}`);
   }, [units]);
 
+  return (
+    <>
       <div 
         className="app-container" 
         style={{ background: getTimeBasedGradient() }}
@@ -310,11 +312,6 @@ const WeatherApp: React.FC = () => {
         <div className="floating-element floating-1 glass-floating" />
         <div className="floating-element floating-2 glass-floating" />
         <div className="floating-element floating-3 glass-floating" />
-
-        {/* Demo Notice */}
-        <div className="demo-notice glass-secondary">
-          <p>🌤️ Demo Mode - Using mock weather data</p>
-        </div>
 
         {/* Notifications */}
         {showNotification && (
@@ -645,7 +642,6 @@ const WeatherApp: React.FC = () => {
         </div>
       </div>
     </>
-  );
-};
-
-export default WeatherApp;
+    );
+  
+  }
