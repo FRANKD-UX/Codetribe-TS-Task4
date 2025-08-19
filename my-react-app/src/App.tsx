@@ -1,4 +1,3 @@
-import './App.css';
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Cloud, 
@@ -80,15 +79,6 @@ interface SavedLocation {
   lon: number;
 }
 
-// Glass effect utility classes
-const glassStyles = {
-  primaryGlass: "bg-white/10 backdrop-blur-xl border border-white/20 shadow-xl",
-  secondaryGlass: "bg-white/15 backdrop-blur-lg border border-white/30 shadow-lg",
-  floatingGlass: "bg-white/20 backdrop-blur-md border border-white/40 shadow-2xl",
-  hoverGlass: "hover:bg-white/25 hover:border-white/50 hover:shadow-2xl transition-all duration-300",
-  activeGlass: "bg-white/30 border-white/50 shadow-inner",
-};
-
 const WeatherApp: React.FC = () => {
   // State management
   const [currentWeather, setCurrentWeather] = useState<WeatherData | null>(null);
@@ -105,10 +95,6 @@ const WeatherApp: React.FC = () => {
   const [notificationMessage, setNotificationMessage] = useState('');
   const [currentTime, setCurrentTime] = useState(new Date());
 
-  // Using OpenWeatherMap API with a demo key (users need to replace with their own)
-  const API_KEY = '7c2a3a9c8b7d4e2f3a1b5c6d8e9f0a1b'; // Demo key - replace with your actual key
-  const BASE_URL = 'https://api.openweathermap.org/data/2.5';
-
   // Update current time every minute for background gradient
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
@@ -120,21 +106,21 @@ const WeatherApp: React.FC = () => {
     const hour = currentTime.getHours();
     
     if (hour >= 5 && hour < 7) {
-      return 'from-orange-300 via-pink-300 to-purple-400';
+      return 'linear-gradient(135deg, #fbbf24, #f472b6, #a78bfa)';
     } else if (hour >= 7 && hour < 12) {
-      return 'from-blue-400 via-cyan-300 to-blue-500';
+      return 'linear-gradient(135deg, #60a5fa, #34d399, #3b82f6)';
     } else if (hour >= 12 && hour < 17) {
-      return 'from-blue-300 via-blue-400 to-indigo-500';
+      return 'linear-gradient(135deg, #93c5fd, #60a5fa, #6366f1)';
     } else if (hour >= 17 && hour < 19) {
-      return 'from-yellow-300 via-orange-400 to-red-400';
+      return 'linear-gradient(135deg, #fde047, #fb923c, #ef4444)';
     } else if (hour >= 19 && hour < 21) {
-      return 'from-purple-400 via-pink-400 to-orange-400';
+      return 'linear-gradient(135deg, #a78bfa, #f472b6, #fb923c)';
     } else {
-      return 'from-gray-800 via-purple-900 to-black';
+      return 'linear-gradient(135deg, #374151, #7c3aed, #000000)';
     }
   }, [currentTime]);
 
-  // Mock weather data for demo purposes (when API is not available)
+  // Mock weather data for demo purposes
   const getMockWeatherData = useCallback((locationName: string = 'New York') => {
     const conditions = ['clear', 'clouds', 'rain', 'snow'];
     const randomCondition = conditions[Math.floor(Math.random() * conditions.length)];
@@ -164,7 +150,7 @@ const WeatherApp: React.FC = () => {
 
     return {
       location: locationName,
-      country: 'US',
+      country: 'Demo',
       temperature: Math.floor(Math.random() * 25) + 20,
       condition: randomCondition,
       description: `${randomCondition} skies`,
@@ -182,87 +168,6 @@ const WeatherApp: React.FC = () => {
     };
   }, []);
 
-  // Fetch weather data from OpenWeatherMap API with fallback
-  const fetchWeatherData = useCallback(async (lat: number, lon: number, locationName?: string) => {
-    try {
-      // Try to fetch from API first
-      const currentResponse = await fetch(
-        `${BASE_URL}/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`
-      );
-      
-      if (!currentResponse.ok) {
-        throw new Error('API request failed');
-      }
-      
-      const currentData = await currentResponse.json();
-      
-      // Forecast data
-      const forecastResponse = await fetch(
-        `${BASE_URL}/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`
-      );
-      
-      const forecastData = await forecastResponse.json();
-      
-      // Process hourly forecast (next 24 hours)
-      const hourlyForecast: HourlyWeather[] = forecastData.list.slice(0, 8).map((item: any) => ({
-        time: new Date(item.dt * 1000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-        temperature: Math.round(item.main.temp),
-        condition: item.weather[0].main.toLowerCase(),
-        windSpeed: Math.round(item.wind.speed * 3.6), // Convert m/s to km/h
-        humidity: item.main.humidity,
-        icon: item.weather[0].icon
-      }));
-      
-      // Process daily forecast (next 5 days)
-      const dailyMap = new Map();
-      forecastData.list.forEach((item: any) => {
-        const date = new Date(item.dt * 1000).toLocaleDateString();
-        if (!dailyMap.has(date)) {
-          dailyMap.set(date, {
-            date: new Date(item.dt * 1000).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
-            maxTemp: item.main.temp_max,
-            minTemp: item.main.temp_min,
-            condition: item.weather[0].main.toLowerCase(),
-            humidity: item.main.humidity,
-            windSpeed: Math.round(item.wind.speed * 3.6),
-            icon: item.weather[0].icon
-          });
-        } else {
-          const existing = dailyMap.get(date);
-          existing.maxTemp = Math.max(existing.maxTemp, item.main.temp_max);
-          existing.minTemp = Math.min(existing.minTemp, item.main.temp_min);
-        }
-      });
-      
-      const dailyForecast = Array.from(dailyMap.values()).slice(0, 7);
-      
-      const weatherData: WeatherData = {
-        location: locationName || currentData.name,
-        country: currentData.sys.country,
-        temperature: Math.round(currentData.main.temp),
-        condition: currentData.weather[0].main.toLowerCase(),
-        description: currentData.weather[0].description,
-        humidity: currentData.main.humidity,
-        windSpeed: Math.round(currentData.wind.speed * 3.6),
-        visibility: Math.round(currentData.visibility / 1000),
-        pressure: currentData.main.pressure,
-        uvIndex: Math.floor(Math.random() * 11), // UV data requires separate API call
-        feelsLike: Math.round(currentData.main.feels_like),
-        sunrise: new Date(currentData.sys.sunrise * 1000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-        sunset: new Date(currentData.sys.sunset * 1000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-        hourlyForecast,
-        dailyForecast,
-        timezone: currentData.timezone
-      };
-      
-      return weatherData;
-    } catch (error) {
-      console.warn('API request failed, using mock data:', error);
-      // Fallback to mock data
-      return getMockWeatherData(locationName);
-    }
-  }, [API_KEY, getMockWeatherData]);
-
   // Get user's current location and fetch weather
   const getCurrentLocation = useCallback(() => {
     setLoading(true);
@@ -270,42 +175,15 @@ const WeatherApp: React.FC = () => {
     
     showNotificationMessage('Getting your location...');
     
-    if (!navigator.geolocation) {
-      // Use mock data for demo
-      const mockWeather = getMockWeatherData('Current Location');
+    // For demo purposes, we'll use mock data
+    setTimeout(() => {
+      const mockWeather = getMockWeatherData('Your Location');
       setCurrentWeather(mockWeather);
       setActiveLocationId('current');
       setLoading(false);
-      showNotificationMessage('Using demo location data');
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        try {
-          const { latitude, longitude } = position.coords;
-          const weather = await fetchWeatherData(latitude, longitude);
-          setCurrentWeather(weather);
-          setActiveLocationId('current');
-          setLoading(false);
-          showNotificationMessage('Location detected successfully!');
-        } catch (error) {
-          const mockWeather = getMockWeatherData('Current Location');
-          setCurrentWeather(mockWeather);
-          setActiveLocationId('current');
-          setLoading(false);
-          showNotificationMessage('Using demo weather data');
-        }
-      },
-      (error) => {
-        const mockWeather = getMockWeatherData('Current Location');
-        setCurrentWeather(mockWeather);
-        setActiveLocationId('current');
-        setLoading(false);
-        showNotificationMessage('Using demo location data');
-      }
-    );
-  }, [fetchWeatherData, getMockWeatherData]);
+      showNotificationMessage('Demo location loaded!');
+    }, 1000);
+  }, [getMockWeatherData]);
 
   // Search for location
   const searchLocation = useCallback(async () => {
@@ -315,43 +193,16 @@ const WeatherApp: React.FC = () => {
     setError(null);
     showNotificationMessage('Searching for location...');
     
-    try {
-      // Try geocoding API first
-      const geocodeResponse = await fetch(
-        `https://api.openweathermap.org/geo/1.0/direct?q=${searchQuery}&limit=1&appid=${API_KEY}`
-      );
-      
-      if (geocodeResponse.ok) {
-        const geocodeData = await geocodeResponse.json();
-        
-        if (geocodeData.length > 0) {
-          const { lat, lon, name, country } = geocodeData[0];
-          const weather = await fetchWeatherData(lat, lon, name);
-          setCurrentWeather(weather);
-          setActiveLocationId('search');
-          setLoading(false);
-          showNotificationMessage(`Weather data loaded for ${name}`);
-          setSearchQuery('');
-          return;
-        }
-      }
-      
-      // Fallback to mock data
+    // For demo purposes, use mock data with search query
+    setTimeout(() => {
       const mockWeather = getMockWeatherData(searchQuery);
       setCurrentWeather(mockWeather);
       setActiveLocationId('search');
       setLoading(false);
-      showNotificationMessage(`Showing demo data for ${searchQuery}`);
+      showNotificationMessage(`Demo data loaded for ${searchQuery}`);
       setSearchQuery('');
-    } catch (error) {
-      const mockWeather = getMockWeatherData(searchQuery);
-      setCurrentWeather(mockWeather);
-      setActiveLocationId('search');
-      setLoading(false);
-      showNotificationMessage(`Showing demo data for ${searchQuery}`);
-      setSearchQuery('');
-    }
-  }, [searchQuery, fetchWeatherData, API_KEY, getMockWeatherData]);
+    }, 1000);
+  }, [searchQuery, getMockWeatherData]);
 
   // Initialize with current location
   useEffect(() => {
@@ -377,19 +228,19 @@ const WeatherApp: React.FC = () => {
 
   // Get weather icon
   const getWeatherIcon = useCallback((condition: string, size: number = 24) => {
-    const iconProps = { size, className: "text-current drop-shadow-lg" };
+    const iconProps = { size, style: { filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' } };
     switch (condition.toLowerCase()) {
-      case 'clear': return <Sun {...iconProps} className="text-yellow-300 drop-shadow-lg" />;
-      case 'sunny': return <Sun {...iconProps} className="text-yellow-300 drop-shadow-lg" />;
-      case 'clouds': return <Cloud {...iconProps} className="text-gray-200 drop-shadow-lg" />;
-      case 'cloudy': return <Cloud {...iconProps} className="text-gray-200 drop-shadow-lg" />;
-      case 'rain': return <CloudRain {...iconProps} className="text-blue-300 drop-shadow-lg" />;
-      case 'rainy': return <CloudRain {...iconProps} className="text-blue-300 drop-shadow-lg" />;
-      case 'snow': return <CloudSnow {...iconProps} className="text-white drop-shadow-lg" />;
-      case 'snowy': return <CloudSnow {...iconProps} className="text-white drop-shadow-lg" />;
-      case 'thunderstorm': return <Zap {...iconProps} className="text-yellow-400 drop-shadow-lg" />;
-      case 'drizzle': return <CloudDrizzle {...iconProps} className="text-blue-200 drop-shadow-lg" />;
-      default: return <Sun {...iconProps} className="text-yellow-300 drop-shadow-lg" />;
+      case 'clear': return <Sun {...iconProps} style={{ ...iconProps.style, color: '#fde047' }} />;
+      case 'sunny': return <Sun {...iconProps} style={{ ...iconProps.style, color: '#fde047' }} />;
+      case 'clouds': return <Cloud {...iconProps} style={{ ...iconProps.style, color: '#e5e7eb' }} />;
+      case 'cloudy': return <Cloud {...iconProps} style={{ ...iconProps.style, color: '#e5e7eb' }} />;
+      case 'rain': return <CloudRain {...iconProps} style={{ ...iconProps.style, color: '#93c5fd' }} />;
+      case 'rainy': return <CloudRain {...iconProps} style={{ ...iconProps.style, color: '#93c5fd' }} />;
+      case 'snow': return <CloudSnow {...iconProps} style={{ ...iconProps.style, color: '#ffffff' }} />;
+      case 'snowy': return <CloudSnow {...iconProps} style={{ ...iconProps.style, color: '#ffffff' }} />;
+      case 'thunderstorm': return <Zap {...iconProps} style={{ ...iconProps.style, color: '#fbbf24' }} />;
+      case 'drizzle': return <CloudDrizzle {...iconProps} style={{ ...iconProps.style, color: '#bae6fd' }} />;
+      default: return <Sun {...iconProps} style={{ ...iconProps.style, color: '#fde047' }} />;
     }
   }, []);
 
@@ -415,19 +266,13 @@ const WeatherApp: React.FC = () => {
     setLoading(true);
     showNotificationMessage(`Loading weather for ${location.name}...`);
     
-    try {
-      const weather = await fetchWeatherData(location.lat, location.lon, location.name);
-      setCurrentWeather(weather);
-      setActiveLocationId(location.id);
-      setLoading(false);
-    } catch (error) {
+    setTimeout(() => {
       const mockWeather = getMockWeatherData(location.name);
       setCurrentWeather(mockWeather);
       setActiveLocationId(location.id);
       setLoading(false);
-      showNotificationMessage('Using demo weather data');
-    }
-  }, [fetchWeatherData, getMockWeatherData]);
+    }, 800);
+  }, [getMockWeatherData]);
 
   // Remove saved location
   const removeSavedLocation = useCallback((locationId: string) => {
@@ -450,393 +295,356 @@ const WeatherApp: React.FC = () => {
     showNotificationMessage(`Units changed to ${newUnits}`);
   }, [units]);
 
-  const gradientClass = `bg-gradient-to-br ${getTimeBasedGradient()}`;
+      <div 
+        className="app-container" 
+        style={{ background: getTimeBasedGradient() }}
+      >
+        {/* Animated Background Elements */}
+        <div className="bg-element bg-element-1" />
+        <div className="bg-element bg-element-2" />
+        <div className="bg-element bg-element-3" />
+        <div className="bg-element bg-element-4" />
+        <div className="bg-element bg-element-5" />
 
-  return (
-    <div className={`min-h-screen transition-all duration-1000 ${gradientClass} relative overflow-hidden`}>
-      {/* Enhanced animated background elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-10 left-10 w-32 h-32 bg-white/5 rounded-full blur-xl animate-pulse"></div>
-        <div className="absolute top-1/2 right-20 w-48 h-48 bg-white/3 rounded-full blur-2xl animate-pulse delay-700"></div>
-        <div className="absolute bottom-20 left-1/3 w-24 h-24 bg-white/4 rounded-full blur-xl animate-pulse delay-1000"></div>
-        <div className="absolute top-1/4 left-1/2 w-16 h-16 bg-white/6 rounded-full blur-lg animate-pulse delay-500"></div>
-        <div className="absolute bottom-1/3 right-1/4 w-20 h-20 bg-white/4 rounded-full blur-lg animate-pulse delay-1500"></div>
-      </div>
+        {/* Floating Ambient Elements */}
+        <div className="floating-element floating-1 glass-floating" />
+        <div className="floating-element floating-2 glass-floating" />
+        <div className="floating-element floating-3 glass-floating" />
 
-     
+        {/* Demo Notice */}
+        <div className="demo-notice glass-secondary">
+          <p>🌤️ Demo Mode - Using mock weather data</p>
+        </div>
 
-      {/* Notification */}
-      {showNotification && (
-        <div className="fixed top-20 right-4 z-50 animate-pulse">
-          <div className={`${glassStyles.floatingGlass} text-white px-6 py-3 rounded-lg`}>
+        {/* Notifications */}
+        {showNotification && (
+          <div className="notification glass-primary">
             {notificationMessage}
           </div>
-        </div>
-      )}
-
-      <div className="container mx-auto px-4 py-8 max-w-6xl relative z-10">
-        {/* Header */}
-        <header className="text-center mb-8">
-          <h1 className="text-4xl md:text-6xl font-bold mb-4 text-white drop-shadow-2xl">Weather App</h1>
-          <p className="text-lg md:text-xl text-white/90 drop-shadow-lg">Your personal weather companion</p>
-        </header>
-
-        {/* Search and Controls */}
-        <div className="flex flex-col md:flex-row gap-4 mb-8 items-center justify-between">
-          <div className="flex gap-2 w-full md:w-auto">
-            <div className="relative flex-1 md:w-80">
-              <input
-                type="text"
-                placeholder="Search for a city..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && searchLocation()}
-                className={`w-full px-4 py-3 pr-12 rounded-xl ${glassStyles.primaryGlass} text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/30 ${glassStyles.hoverGlass}`}
-              />
-              <button
-                onClick={searchLocation}
-                disabled={loading}
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 hover:bg-white/20 rounded-lg transition-colors"
-              >
-                <Search size={20} className="text-white" />
-              </button>
-            </div>
-            <button
-              onClick={getCurrentLocation}
-              disabled={loading}
-              className={`px-4 py-3 ${glassStyles.primaryGlass} rounded-xl ${glassStyles.hoverGlass} flex items-center gap-2 text-white`}
-            >
-              <MapPin size={20} />
-              <span className="hidden sm:inline">Current</span>
-            </button>
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setShowSettings(!showSettings)}
-              className={`px-4 py-3 ${glassStyles.primaryGlass} rounded-xl ${glassStyles.hoverGlass} flex items-center gap-2 text-white`}
-            >
-              <Settings size={20} />
-              <span className="hidden sm:inline">Settings</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Settings Panel */}
-        {showSettings && (
-          <div className={`${glassStyles.primaryGlass} rounded-2xl p-6 mb-8 ${glassStyles.hoverGlass}`}>
-            <h3 className="text-xl font-semibold mb-4 text-white">Settings</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <button
-                onClick={toggleTheme}
-                className={`flex items-center gap-3 p-3 ${glassStyles.secondaryGlass} rounded-xl ${glassStyles.hoverGlass} text-white`}
-              >
-                {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
-                <span>Switch to {theme === 'light' ? 'Dark' : 'Light'} Theme</span>
-              </button>
-              <button
-                onClick={toggleUnits}
-                className={`flex items-center gap-3 p-3 ${glassStyles.secondaryGlass} rounded-xl ${glassStyles.hoverGlass} text-white`}
-              >
-                <Thermometer size={20} />
-                <span>Switch to {units === 'celsius' ? 'Fahrenheit' : 'Celsius'}</span>
-              </button>
-              <button
-                onClick={() => currentWeather && saveCurrentLocation()}
-                disabled={!currentWeather}
-                className={`flex items-center gap-3 p-3 ${glassStyles.secondaryGlass} rounded-xl ${glassStyles.hoverGlass} disabled:opacity-50 text-white`}
-              >
-                <Plus size={20} />
-                <span>Save Location</span>
-              </button>
-            </div>
-          </div>
         )}
 
-        {/* Loading State */}
-        {loading && (
-          <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-white mb-4"></div>
-            <p className="text-lg text-white drop-shadow-lg">Loading weather data...</p>
+        <div className="content-container">
+          {/* Header */}
+          <div>
+            <h1 className="main-title">SkyView</h1>
+            <p className="subtitle">Beautiful weather at your fingertips</p>
           </div>
-        )}
 
-        {/* Error State */}
-        {error && (
-          <div className="text-center py-8">
-            <div className={`${glassStyles.primaryGlass} rounded-2xl p-8`}>
-              <AlertTriangle size={48} className="mx-auto mb-4 text-yellow-300 drop-shadow-lg" />
-              <p className="text-lg text-white mb-4">{error}</p>
-              <button
+          {/* Controls */}
+          <div className="controls">
+            <div className="search-group">
+              <div className="search-container">
+                <input
+                  type="text"
+                  className="search-input glass-primary"
+                  placeholder="Search city..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && searchLocation()}
+                />
+                <button 
+                  className="search-button"
+                  onClick={searchLocation}
+                  disabled={!searchQuery.trim()}
+                >
+                  <Search size={20} />
+                </button>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
+              <button 
+                className="control-button glass-secondary glass-hover"
                 onClick={getCurrentLocation}
-                className={`px-6 py-2 ${glassStyles.secondaryGlass} rounded-xl ${glassStyles.hoverGlass} text-white`}
+                disabled={loading}
               >
-                Try Again
+                <MapPin size={16} />
+                My Location
+              </button>
+              
+              <button 
+                className="control-button glass-secondary glass-hover"
+                onClick={saveCurrentLocation}
+                disabled={loading || !currentWeather}
+              >
+                <Plus size={16} />
+                Save
+              </button>
+
+              <button 
+                className="control-button glass-secondary glass-hover"
+                onClick={() => setShowSettings(!showSettings)}
+              >
+                <Settings size={16} />
+                Settings
               </button>
             </div>
           </div>
-        )}
 
-        {/* Weather Display */}
-        {currentWeather && !loading && (
-          <div className="space-y-8">
-            {/* Current Weather */}
-            <div className={`${glassStyles.primaryGlass} rounded-2xl p-6 md:p-8`}>
-              <div className="flex flex-col lg:flex-row justify-between items-center mb-8">
-                <div className="text-center lg:text-left mb-6 lg:mb-0">
-                  <h2 className="text-2xl md:text-3xl font-bold flex items-center justify-center lg:justify-start gap-2 text-white drop-shadow-lg">
-                    <MapPin size={24} />
-                    {currentWeather.location}
-                  </h2>
-                  <p className="text-lg text-white/80 drop-shadow-lg">{currentWeather.country}</p>
-                  <p className="text-sm text-white/70 mt-2 drop-shadow-lg">
-                    {new Date().toLocaleDateString('en-US', { 
-                      weekday: 'long', 
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric' 
-                    })}
-                  </p>
-                  <p className="text-sm text-white/70 capitalize">{currentWeather.description}</p>
-                </div>
+          {/* Settings Panel */}
+          {showSettings && (
+            <div className="settings-panel glass-primary">
+              <h3 className="settings-title">Settings</h3>
+              <div className="settings-grid">
+                <button 
+                  className="setting-button glass-secondary glass-hover"
+                  onClick={toggleTheme}
+                >
+                  {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+                  {theme === 'light' ? 'Dark Mode' : 'Light Mode'}
+                </button>
                 
-                {/* Enhanced Main Temperature Circle with Glass Effect */}
-                <div className="relative">
-                  <div className="relative w-48 h-48 md:w-56 md:h-56">
-                    {/* Outer decorative ring with enhanced glass effect */}
-                    <div className={`absolute inset-0 rounded-full ${glassStyles.floatingGlass} p-1 ring-1 ring-white/30`}>
-                      <div className={`w-full h-full rounded-full ${glassStyles.primaryGlass} flex flex-col items-center justify-center relative overflow-hidden ring-1 ring-white/20`}>
-                        {/* Enhanced background pattern */}
-                        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/10 to-transparent"></div>
-                        <div className="absolute inset-0 bg-gradient-to-tl from-white/5 via-transparent to-white/5"></div>
-                        
-                        {/* Weather Icon with glass background */}
-                        <div className={`mb-2 p-3 ${glassStyles.floatingGlass} rounded-full ring-1 ring-white/30`}>
-                          {getWeatherIcon(currentWeather.condition, 40)}
-                        </div>
-                        
-                        {/* Temperature */}
-                        <div className="text-3xl md:text-4xl font-bold text-center text-white drop-shadow-lg">
-                          {convertTemp(currentWeather.temperature)}°
-                        </div>
-                        <div className="text-lg font-medium text-white/90 drop-shadow-lg">
-                          {units === 'celsius' ? 'Celsius' : 'Fahrenheit'}
-                        </div>
-                        
-                        {/* Feels Like */}
-                        <div className="text-sm text-white/70 mt-1 text-center drop-shadow-lg">
-                          Feels like {convertTemp(currentWeather.feelsLike)}°
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Enhanced floating info bubbles with glass effects */}
-                    <div className={`absolute -top-2 -right-2 w-16 h-16 ${glassStyles.floatingGlass} rounded-full flex flex-col items-center justify-center ring-1 ring-blue-300/50 animate-pulse`}>
-                      <Wind size={16} className="text-white drop-shadow-lg" />
-                      <span className="text-xs font-semibold text-white">{currentWeather.windSpeed}</span>
-                      <span className="text-xs text-white/80">km/h</span>
-                    </div>
-                    
-                    <div className={`absolute -bottom-2 -left-2 w-16 h-16 ${glassStyles.floatingGlass} rounded-full flex flex-col items-center justify-center ring-1 ring-green-300/50 animate-pulse delay-300`}>
-                      <Droplets size={16} className="text-white drop-shadow-lg" />
-                      <span className="text-xs font-semibold text-white">{currentWeather.humidity}%</span>
-                      <span className="text-xs text-white/80">humid</span>
-                    </div>
-                    
-                    <div className={`absolute top-1/2 -left-4 transform -translate-y-1/2 w-12 h-12 ${glassStyles.floatingGlass} rounded-full flex flex-col items-center justify-center ring-1 ring-purple-300/50 animate-pulse delay-500`}>
-                      <Eye size={14} className="text-white drop-shadow-lg" />
-                      <span className="text-xs font-semibold text-white">{currentWeather.visibility}</span>
-                    </div>
-                    
-                    <div className={`absolute top-1/2 -right-4 transform -translate-y-1/2 w-12 h-12 ${glassStyles.floatingGlass} rounded-full flex flex-col items-center justify-center ring-1 ring-orange-300/50 animate-pulse delay-700`}>
-                      <Gauge size={14} className="text-white drop-shadow-lg" />
-                      <span className="text-xs font-semibold text-white">{Math.round(currentWeather.pressure/10)}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Enhanced Additional Weather Info - Glass Circular Cards */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
-                {/* UV Index Circle with Glass Effect */}
-                <div className="flex flex-col items-center">
-                  <div className="relative w-24 h-24 mb-3">
-                    <div className={`w-full h-full ${glassStyles.floatingGlass} rounded-full flex flex-col items-center justify-center ring-1 ring-yellow-300/50 hover:scale-105 transition-transform duration-300`}>
-                      <Sun size={16} className="text-white mb-1 drop-shadow-lg" />
-                      <span className="text-sm font-bold text-white drop-shadow-lg">{currentWeather.uvIndex}</span>
-                      <span className="text-xs text-white/80">UV</span>
-                    </div>
-                  </div>
-                  <span className="text-sm text-white/80 drop-shadow-lg">UV Index</span>
-                </div>
-
-                {/* Pressure Circle with Glass Effect */}
-                <div className="flex flex-col items-center">
-                  <div className="relative w-24 h-24 mb-3">
-                    <div className={`w-full h-24 ${glassStyles.floatingGlass} rounded-full flex flex-col items-center justify-center ring-1 ring-orange-300/50 hover:scale-105 transition-transform duration-300`}>
-                      <Gauge size={16} className="text-white mb-1 drop-shadow-lg" />
-                      <span className="text-xs font-bold text-white drop-shadow-lg">{Math.round(currentWeather.pressure/10)}</span>
-                      <span className="text-xs text-white/80">hPa</span>
-                    </div>
-                  </div>
-                  <span className="text-sm text-white/80 drop-shadow-lg">Pressure</span>
-                </div>
-
-                {/* Sunrise Circle with Glass Effect */}
-                <div className="flex flex-col items-center">
-                  <div className={`w-24 h-24 ${glassStyles.floatingGlass} rounded-full flex flex-col items-center justify-center ring-1 ring-orange-300/50 mb-3 hover:scale-105 transition-transform duration-300`}>
-                    <Sunrise size={16} className="text-white mb-1 drop-shadow-lg" />
-                    <span className="text-xs font-bold text-white drop-shadow-lg">{currentWeather.sunrise}</span>
-                    <span className="text-xs text-white/80">sunrise</span>
-                  </div>
-                  <span className="text-sm text-white/80 drop-shadow-lg">Sunrise</span>
-                </div>
-
-                {/* Sunset Circle with Glass Effect */}
-                <div className="flex flex-col items-center">
-                  <div className={`w-24 h-24 ${glassStyles.floatingGlass} rounded-full flex flex-col items-center justify-center ring-1 ring-purple-300/50 mb-3 hover:scale-105 transition-transform duration-300`}>
-                    <Sunset size={16} className="text-white mb-1 drop-shadow-lg" />
-                    <span className="text-xs font-bold text-white drop-shadow-lg">{currentWeather.sunset}</span>
-                    <span className="text-xs text-white/80">sunset</span>
-                  </div>
-                  <span className="text-sm text-white/80 drop-shadow-lg">Sunset</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Enhanced View Toggle with Glass Effect */}
-            <div className="flex justify-center">
-              <div className={`${glassStyles.primaryGlass} rounded-xl p-1 ring-1 ring-white/30`}>
-                <button
-                  onClick={() => setViewMode('hourly')}
-                  className={`px-6 py-2 rounded-lg transition-all flex items-center gap-2 ${
-                    viewMode === 'hourly' ? `${glassStyles.activeGlass} text-white` : 'text-white/70 hover:text-white hover:bg-white/10'
-                  }`}
+                <button 
+                  className="setting-button glass-secondary glass-hover"
+                  onClick={toggleUnits}
                 >
-                  <Clock size={16} />
-                  Hourly
+                  <Thermometer size={20} />
+                  {units === 'celsius' ? 'Fahrenheit' : 'Celsius'}
                 </button>
-                <button
-                  onClick={() => setViewMode('daily')}
-                  className={`px-6 py-2 rounded-lg transition-all flex items-center gap-2 ${
-                    viewMode === 'daily' ? `${glassStyles.activeGlass} text-white` : 'text-white/70 hover:text-white hover:bg-white/10'
-                  }`}
+
+                <button 
+                  className="setting-button glass-secondary glass-hover"
+                  onClick={() => showNotificationMessage('Notifications enabled!')}
                 >
-                  <Calendar size={16} />
-                  Daily
+                  <AlertTriangle size={20} />
+                  Notifications
                 </button>
               </div>
             </div>
+          )}
 
-            {/* Enhanced Forecast with Glass Effects */}
-            <div className={`${glassStyles.primaryGlass} rounded-2xl p-6 ring-1 ring-white/20`}>
-              <h3 className="text-xl font-semibold mb-4 text-white drop-shadow-lg">
-                {viewMode === 'hourly' ? '24-Hour Forecast' : '7-Day Forecast'}
-              </h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
-                {viewMode === 'hourly' 
-                  ? currentWeather.hourlyForecast.slice(0, 8).map((hour, index) => (
-                      <div key={index} className={`${glassStyles.secondaryGlass} rounded-xl p-3 text-center ${glassStyles.hoverGlass} ring-1 ring-white/10 hover:scale-105 transition-all duration-300`}>
-                        <div className="text-sm text-white/80 mb-2 drop-shadow-lg">{hour.time}</div>
-                        <div className="mb-2 flex justify-center">{getWeatherIcon(hour.condition, 28)}</div>
-                        <div className="font-semibold text-white drop-shadow-lg">{convertTemp(hour.temperature)}°</div>
-                        <div className="text-xs text-white/70 mt-1 drop-shadow-lg">{hour.humidity}%</div>
-                      </div>
-                    ))
-                  : currentWeather.dailyForecast.map((day, index) => (
-                      <div key={index} className={`${glassStyles.secondaryGlass} rounded-xl p-3 text-center ${glassStyles.hoverGlass} ring-1 ring-white/10 hover:scale-105 transition-all duration-300`}>
-                        <div className="text-sm text-white/80 mb-2 drop-shadow-lg">{day.date}</div>
-                        <div className="mb-2 flex justify-center">{getWeatherIcon(day.condition, 28)}</div>
-                        <div className="font-semibold text-white drop-shadow-lg">{convertTemp(Math.round(day.maxTemp))}°</div>
-                        <div className="text-sm text-white/70 drop-shadow-lg">{convertTemp(Math.round(day.minTemp))}°</div>
-                      </div>
-                    ))
-                }
+          {/* Loading State */}
+          {loading && (
+            <div className="loading">
+              <div className="spinner" />
+              <p className="loading-text">Loading weather data...</p>
+            </div>
+          )}
+
+          {/* Error State */}
+          {error && !loading && (
+            <div className="error">
+              <div className="error-container glass-primary">
+                <AlertTriangle size={48} className="error-icon" />
+                <p className="error-text">{error}</p>
+                <button 
+                  className="control-button glass-secondary glass-hover"
+                  onClick={getCurrentLocation}
+                >
+                  Try Again
+                </button>
               </div>
             </div>
+          )}
 
-            {/* Enhanced Saved Locations with Glass Effects */}
-            {savedLocations.length > 0 && (
-              <div className={`${glassStyles.primaryGlass} rounded-2xl p-6 ring-1 ring-white/20`}>
-                <h3 className="text-xl font-semibold mb-4 text-white drop-shadow-lg">Saved Locations</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {savedLocations.map((location) => (
-                    <div
-                      key={location.id}
-                      className={`${glassStyles.secondaryGlass} rounded-xl p-4 ${glassStyles.hoverGlass} cursor-pointer group ring-1 ring-white/10 hover:scale-105 transition-all duration-300`}
-                      onClick={() => loadSavedLocation(location)}
-                    >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <div className="font-semibold text-white drop-shadow-lg">{location.name}</div>
-                          <div className="text-sm text-white/70 drop-shadow-lg">{location.country}</div>
+          {/* Weather Content */}
+          {currentWeather && !loading && (
+            <div className="weather-container">
+              {/* Current Weather */}
+              <div className="current-weather glass-primary">
+                <div className="weather-header">
+                  <div className="location-info">
+                    <div className="location-title">
+                      <MapPin size={24} />
+                      {currentWeather.location}
+                    </div>
+                    <p className="location-country">{currentWeather.country}</p>
+                    <p className="location-date">
+                      {new Date().toLocaleDateString('en-US', { 
+                        weekday: 'long', 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                      })}
+                    </p>
+                    <p className="location-description">{currentWeather.description}</p>
+                  </div>
+
+                  <div className="temp-circle-container">
+                    <div className="temp-circle glass-secondary">
+                      <div className="temp-circle-outer glass-floating">
+                        <div className="temp-circle-inner">
+                          <div className="temp-circle-bg" />
+                          <div className="temp-circle-bg2" />
+                          
+                          <div className="weather-icon-container glass-floating">
+                            {getWeatherIcon(currentWeather.condition, 48)}
+                          </div>
+                          
+                          <div className="temp-display">
+                            {convertTemp(currentWeather.temperature)}
+                            <span className="temp-unit">°{units === 'celsius' ? 'C' : 'F'}</span>
+                          </div>
+                          
+                          <p className="feels-like">
+                            Feels like {convertTemp(currentWeather.feelsLike)}°
+                          </p>
                         </div>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            removeSavedLocation(location.id);
-                          }}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-white/20 rounded"
-                        >
-                          <X size={16} className="text-white" />
-                        </button>
                       </div>
                     </div>
-                  ))}
+
+                    {/* Floating Info Bubbles */}
+                    <div className="info-bubble info-bubble-wind">
+                      <Wind size={16} color="white" />
+                      <span className="bubble-value">{currentWeather.windSpeed}</span>
+                      <span className="bubble-label">km/h</span>
+                    </div>
+
+                    <div className="info-bubble info-bubble-humidity">
+                      <Droplets size={16} color="white" />
+                      <span className="bubble-value">{currentWeather.humidity}</span>
+                      <span className="bubble-label">%</span>
+                    </div>
+
+                    <div className="info-bubble info-bubble-small info-bubble-visibility">
+                      <Eye size={12} color="white" />
+                      <span className="bubble-value">{currentWeather.visibility}</span>
+                      <span className="bubble-label">km</span>
+                    </div>
+
+                    <div className="info-bubble info-bubble-small info-bubble-pressure">
+                      <Gauge size={12} color="white" />
+                      <span className="bubble-value">{currentWeather.pressure}</span>
+                      <span className="bubble-label">hPa</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Weather Info Grid */}
+                <div className="weather-info-grid">
+                  <div className="info-card">
+                    <div className="info-card-circle glass-secondary">
+                      <Sunrise size={20} color="white" className="info-card-icon" />
+                      <span className="info-card-value">{currentWeather.sunrise}</span>
+                    </div>
+                    <span className="info-card-label">Sunrise</span>
+                  </div>
+
+                  <div className="info-card">
+                    <div className="info-card-circle glass-secondary">
+                      <Sunset size={20} color="white" className="info-card-icon" />
+                      <span className="info-card-value">{currentWeather.sunset}</span>
+                    </div>
+                    <span className="info-card-label">Sunset</span>
+                  </div>
+
+                  <div className="info-card">
+                    <div className="info-card-circle glass-secondary">
+                      <Sun size={20} color="white" className="info-card-icon" />
+                      <span className="info-card-value">{currentWeather.uvIndex}</span>
+                      <span className="info-card-unit">/10</span>
+                    </div>
+                    <span className="info-card-label">UV Index</span>
+                  </div>
+
+                  <div className="info-card">
+                    <div className="info-card-circle glass-secondary">
+                      <Wind size={20} color="white" className="info-card-icon" />
+                      <span className="info-card-value">{currentWeather.windSpeed}</span>
+                      <span className="info-card-unit">km/h</span>
+                    </div>
+                    <span className="info-card-label">Wind Speed</span>
+                  </div>
                 </div>
               </div>
-            )}
 
-            {/* Enhanced Weather Alerts Section */}
-            {currentWeather.alerts && currentWeather.alerts.length > 0 && (
-              <div className={`${glassStyles.primaryGlass} rounded-2xl p-6 ring-1 ring-red-300/50`}>
-                <h3 className="text-xl font-semibold mb-4 text-white drop-shadow-lg flex items-center gap-2">
-                  <AlertTriangle className="text-yellow-400" />
-                  Weather Alerts
+              {/* View Toggle */}
+              <div className="view-toggle">
+                <div className="toggle-container glass-secondary">
+                  <button 
+                    className={`toggle-button ${viewMode === 'hourly' ? 'active glass-active' : ''}`}
+                    onClick={() => setViewMode('hourly')}
+                  >
+                    <Clock size={16} />
+                    Hourly
+                  </button>
+                  <button 
+                    className={`toggle-button ${viewMode === 'daily' ? 'active glass-active' : ''}`}
+                    onClick={() => setViewMode('daily')}
+                  >
+                    <Calendar size={16} />
+                    Daily
+                  </button>
+                </div>
+              </div>
+
+              {/* Forecast */}
+              <div className="forecast-container glass-primary">
+                <h3 className="forecast-title">
+                  {viewMode === 'hourly' ? '8-Hour Forecast' : '7-Day Forecast'}
                 </h3>
-                <div className="space-y-3">
-                  {currentWeather.alerts.map((alert, index) => (
-                    <div key={index} className={`${glassStyles.secondaryGlass} rounded-xl p-4 ring-1 ring-red-300/30`}>
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className={`w-3 h-3 rounded-full ${
-                          alert.type === 'severe' ? 'bg-red-400' : 
-                          alert.type === 'warning' ? 'bg-yellow-400' : 'bg-blue-400'
-                        }`}></div>
-                        <span className="font-semibold text-white">{alert.title}</span>
-                        <span className="text-sm text-white/60 ml-auto">{alert.time}</span>
-                      </div>
-                      <p className="text-sm text-white/80">{alert.description}</p>
-                    </div>
-                  ))}
+                <div className="forecast-grid">
+                  {viewMode === 'hourly' 
+                    ? currentWeather.hourlyForecast.map((hour, index) => (
+                        <div key={index} className="forecast-item glass-secondary glass-hover">
+                          <p className="forecast-time">{hour.time}</p>
+                          <div className="forecast-icon">
+                            {getWeatherIcon(hour.condition, 32)}
+                          </div>
+                          <p className="forecast-temp">{convertTemp(hour.temperature)}°</p>
+                          <p className="forecast-detail">{hour.humidity}% humidity</p>
+                        </div>
+                      ))
+                    : currentWeather.dailyForecast.map((day, index) => (
+                        <div key={index} className="forecast-item glass-secondary glass-hover">
+                          <p className="forecast-time">{day.date}</p>
+                          <div className="forecast-icon">
+                            {getWeatherIcon(day.condition, 32)}
+                          </div>
+                          <p className="forecast-temp">
+                            {convertTemp(day.maxTemp)}° / {convertTemp(day.minTemp)}°
+                          </p>
+                          <p className="forecast-detail">{day.condition}</p>
+                        </div>
+                      ))
+                  }
                 </div>
               </div>
-            )}
-          </div>
-        )}
 
-        {/* Enhanced Footer with Glass Effect */}
-        <footer className="text-center mt-12 py-8">
-          <div className={`${glassStyles.primaryGlass} rounded-xl p-4 inline-block ring-1 ring-white/20`}>
-            <p className="text-white/60 text-sm drop-shadow-lg">
-              Demo Weather App • Current time: {currentTime.toLocaleTimeString()}
-            </p>
-            <p className="text-white/40 text-xs mt-1">
-              Replace API key with your OpenWeatherMap key for live data
-            </p>
-          </div>
-        </footer>
-      </div>
+              {/* Saved Locations */}
+              {savedLocations.length > 0 && (
+                <div className="saved-locations glass-primary">
+                  <h3 className="saved-locations-title">Saved Locations</h3>
+                  <div className="locations-grid">
+                    {savedLocations.map(location => (
+                      <div 
+                        key={location.id} 
+                        className="location-item glass-secondary glass-hover"
+                        onClick={() => loadSavedLocation(location)}
+                      >
+                        <div className="location-content">
+                          <div>
+                            <p className="location-name">{location.name}</p>
+                            <p className="location-country">{location.country}</p>
+                          </div>
+                          <button 
+                            className="remove-button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeSavedLocation(location.id);
+                            }}
+                          >
+                            <X size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
-      {/* Floating Glass Elements for Ambiance */}
-      <div className="fixed bottom-8 right-8 pointer-events-none">
-        <div className={`w-12 h-12 ${glassStyles.floatingGlass} rounded-full ring-1 ring-white/30 animate-pulse`}></div>
+          {/* Footer */}
+          <div className="footer">
+            <div className="footer-content glass-secondary">
+              <p className="footer-text">SkyView Weather Dashboard</p>
+              <p className="footer-subtext">Crafted with modern web technologies</p>
+            </div>
+          </div>
+        </div>
       </div>
-      <div className="fixed top-1/4 right-12 pointer-events-none">
-        <div className={`w-8 h-8 ${glassStyles.floatingGlass} rounded-full ring-1 ring-white/20 animate-pulse delay-1000`}></div>
-      </div>
-      <div className="fixed bottom-1/3 left-8 pointer-events-none">
-        <div className={`w-10 h-10 ${glassStyles.floatingGlass} rounded-full ring-1 ring-white/25 animate-pulse delay-500`}></div>
-      </div>
-    </div>
+    </>
   );
 };
 
